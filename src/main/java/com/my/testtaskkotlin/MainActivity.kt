@@ -6,8 +6,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.my.testtaskkotlin.db.Profile
 import com.my.testtaskkotlin.db.ProfileDatabase
 import com.my.testtaskkotlin.db.ProfileViewModel
@@ -73,10 +75,8 @@ class MainActivity : AppCompatActivity() {
         val myAdapter = MyAdapter()
         viewModel.profiles.observe(this, Observer {
             for (i in it) {
-                Log.i(MY_TEG, i.toString())
                 myAdapter.setListProfiles(it)
                 this.list = it
-                //create seter for Adapter
             }
         })
         recyclerView.adapter = myAdapter
@@ -86,6 +86,38 @@ class MainActivity : AppCompatActivity() {
                 putDataInDetailActivity(position)
             }
         })
+
+        val itemTouchHelper = ItemTouchHelper(object :
+            ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: ViewHolder,
+                target: ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: ViewHolder, direction: Int) {
+                remove(viewHolder.adapterPosition,myAdapter,viewModel)
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    private fun remove(
+        position: Int,
+        myAdapter: MyAdapter,
+        viewModel: ProfileViewModel
+    ) {
+        val profile: Profile = list.get(position)
+        viewModel.delete(profile)
+        viewModel.profiles.observe(this, Observer {
+            for (i in it) {
+                myAdapter.setListProfiles(it)
+                this.list = it
+            }
+        })
+        myAdapter.notifyDataSetChanged()
     }
 
     private fun putDataInDetailActivity(position: Int) {
